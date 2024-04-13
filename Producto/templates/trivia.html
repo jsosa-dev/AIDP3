@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia</title>
+    <!-- Enlace al archivo CSS de Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilos para la capa de superposición de carga */
+        #loader {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background-color: rgba(255, 255, 255, 1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Capa de superposición de carga -->
+    <div id="loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Cargando...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="/static/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Automatizacion de Infraestructura Digital
+            </a>
+        </div>
+    </nav>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card mx-auto" style="max-width: 500px;">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Pregunta de Trivia</h1>
+                <p class="lead">{{ question }}</p>
+                <form id="triviaForm" method="POST" action="/check_answer">
+                    {% for option in options %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="answer" id="option{{ loop.index }}" value="{{ option }}" required>
+                            <label class="form-check-label" for="option{{ loop.index }}">{{ option }}</label>
+                        </div>
+                    {% endfor %}
+                    <input type="hidden" name="correct_answer" value="{{ options[-1] }}">
+                    <button type="submit" id="submitButton" class="btn btn-primary btn-block">Responder</button>
+                </form>
+                <div id="respuesta"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de JavaScript para manejar el envío del formulario mediante AJAX -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(window).on('load', function() {
+            // Agregar un retraso de 3 segundos después de que la página esté completamente cargada
+            setTimeout(function() {
+                $('#loader').fadeOut();
+            }, 3000);
+        });
+
+        $(document).ready(function() {
+            $('#triviaForm').submit(function(event) {
+                event.preventDefault(); // Evita el comportamiento predeterminado del formulario
+    
+                // Envía la respuesta del usuario al servidor mediante AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: '/check_answer',
+                    data: $(this).serialize(), // Serializa los datos del formulario
+                    success: function(response) {
+                        $('#respuesta').html(response); // Actualiza el contenido de respuesta en el div
+                        // Cambia el texto del botón después de responder
+                        $('#submitButton').text('Nueva Pregunta');
+                        
+                        // Agrega la clase de color al texto de respuesta
+                        if (response.includes("incorrecta")) {
+                            $('#respuesta').addClass('text-danger');
+                        } else {
+                            $('#respuesta').addClass('text-success');
+                        }
+                    }
+                });
+            });
+    
+            // Recargar la página cuando se haga clic en el botón "Nueva Pregunta"
+            $('#submitButton').click(function() {
+                if ($(this).text() === 'Nueva Pregunta') {
+                    location.reload();
+                }
+            });
+        });
+    </script>
+    
+</body>
+</html>
